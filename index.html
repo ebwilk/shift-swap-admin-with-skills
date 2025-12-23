@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ford Manager Dashboard</title>
+<title>Ford Manager Dashboard - Interactive</title>
 
 <style>
     /* --- FORD BRANDING & RESET --- */
@@ -27,17 +27,17 @@
         color: #333;
     }
 
-    /* --- LAYOUT GRID (Desktop First) --- */
+    /* --- LAYOUT GRID --- */
     .dashboard-container {
         max-width: 1200px;
         margin: 0 auto;
         display: grid;
-        grid-template-columns: 350px 1fr; /* Left sidebar fixed, right fluid */
+        grid-template-columns: 350px 1fr; 
         grid-template-rows: auto 1fr;
         gap: 20px;
     }
 
-    /* HEADER (Spans full width) */
+    /* HEADER */
     .header {
         grid-column: 1 / -1;
         background: white;
@@ -49,11 +49,10 @@
         justify-content: space-between;
         align-items: center;
     }
-
     .header h1 { margin: 0; font-size: 20px; color: var(--ford-blue); text-transform: uppercase; letter-spacing: 0.5px; }
     .header-meta { font-size: 14px; color: #666; font-weight: 600; }
 
-    /* KPI CARDS (Spans full width) */
+    /* KPI CARDS - INTERACTIVE */
     .kpi-row {
         grid-column: 1 / -1;
         display: grid;
@@ -69,18 +68,28 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        cursor: pointer;
+        border: 2px solid transparent; /* Prepare for active state */
+        transition: all 0.2s;
     }
+
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    
+    /* Active State Styles */
+    .kpi-card.active { border-color: var(--ford-blue); background-color: #fcfdff; }
+    
     .kpi-number { font-size: 24px; font-weight: 700; color: var(--ford-blue); }
     .kpi-label { font-size: 13px; color: #666; text-transform: uppercase; font-weight: 600; }
-    .kpi-icon { font-size: 24px; opacity: 0.2; }
+    .kpi-icon { font-size: 24px; opacity: 0.3; }
 
-    /* --- LEFT PANEL: REQUESTS --- */
+    /* --- LEFT PANEL --- */
     .panel-requests {
         background: white;
         border-radius: 6px;
         padding: 20px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         height: fit-content;
+        min-height: 300px;
     }
 
     .panel-header {
@@ -90,9 +99,13 @@
         margin-bottom: 15px;
         padding-bottom: 10px;
         border-bottom: 2px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    .request-card {
+    /* CARD STYLES (Shared for Swaps & Open Pickups) */
+    .action-card {
         border: 1px solid var(--ford-border);
         border-left: 5px solid var(--warning);
         background: #fff;
@@ -101,6 +114,7 @@
         margin-bottom: 15px;
         transition: all 0.3s;
     }
+    .action-card.pickup-type { border-left-color: var(--danger); } /* Red for unfilled shifts */
 
     .req-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: #666; font-weight: 600; }
     .req-title { font-size: 15px; font-weight: 700; color: var(--ford-blue); margin-bottom: 5px; }
@@ -140,6 +154,7 @@
     .btn-accept:hover { background: #002555; }
     .btn-decline { background: white; border: 1px solid var(--danger); color: var(--danger); }
     .btn-decline:hover { background: #fff0f0; }
+    .btn-assign { background: var(--ford-blue); color: white; }
 
     /* --- RIGHT PANEL: ROSTER TABLE --- */
     .panel-roster {
@@ -154,6 +169,9 @@
     td { padding: 12px 8px; border-bottom: 1px solid #f0f0f0; color: #333; }
     tr:last-child td { border-bottom: none; }
     tr:hover { background-color: #f9f9f9; }
+    
+    /* Helper to hide rows */
+    tr.hidden-row { display: none; }
 
     .status-dot { height: 8px; width: 8px; background-color: #ccc; border-radius: 50%; display: inline-block; margin-right: 5px; }
     .dot-active { background-color: var(--success); }
@@ -176,76 +194,118 @@
 
     <div class="header">
         <div style="display:flex; align-items:center;">
-            <img src="https://www.ford.com/etc/designs/ford-v-3/clientlibs_base/images/ford-oval-blue.svg" alt="Ford" style="height:30px; margin-right:15px;">
+            <img src="https://raw.githubusercontent.com/ebwilk/Shift-Swap/main/Ford_logo_flat.svg.png" 
+                 alt="Ford" 
+                 style="height:30px; margin-right:15px;"
+                 onerror="this.style.display='none'"> 
             <h1>Supervisor Dashboard</h1>
         </div>
-        <div class="header-meta">
-            Shift A • Dearborn Truck Plant • Nov 25, 2025
-        </div>
+        <div class="header-meta">Shift A • Dearborn Truck Plant</div>
     </div>
 
     <div class="kpi-row">
-        <div class="kpi-card">
+        
+        <div class="kpi-card" id="kpi-staff" onclick="switchView('staff')">
             <div>
                 <div class="kpi-number">24/25</div>
                 <div class="kpi-label">Staff On Floor</div>
             </div>
             <div class="kpi-icon">👷</div>
         </div>
-        <div class="kpi-card" style="border-bottom: 3px solid var(--warning);">
+
+        <div class="kpi-card active" id="kpi-reqs" onclick="switchView('requests')">
             <div>
                 <div class="kpi-number" id="pending-count">1</div>
                 <div class="kpi-label">Pending Requests</div>
             </div>
             <div class="kpi-icon">⚠️</div>
         </div>
-        <div class="kpi-card">
+
+        <div class="kpi-card" id="kpi-open" onclick="switchView('pickups')">
             <div>
                 <div class="kpi-number">2</div>
-                <div class="kpi-label">Open Pickups</div>
+                <div class="kpi-label">Open Shifts</div>
             </div>
             <div class="kpi-icon">📅</div>
         </div>
     </div>
 
     <div class="panel-requests">
-        <div class="panel-header">Swap Requests</div>
+        <div class="panel-header" id="left-panel-title">Pending Requests</div>
 
-        <div class="request-card" id="req-1">
-            <div class="req-header">
-                <span>Received: 2 hours ago</span>
-                <span>ID: #SW-992</span>
+        <div id="view-requests">
+            <div class="action-card" id="req-1">
+                <div class="req-header">
+                    <span>Received: 2 hours ago</span>
+                    <span>#SW-992</span>
+                </div>
+                <div class="req-title">Shift Swap Request</div>
+                
+                <div class="swap-visual">
+                    <strong>K. Davis</strong> <span class="arrow-icon">&rarr;</span> <strong>R. Sanchez</strong>
+                </div>
+
+                <div class="req-details">
+                    Role: Chassis Marriage (Line 2)<br>
+                    Time: Nov 26 | 06:00 – 16:30
+                </div>
+
+                <div class="match-badge">✅ Skills Match Verified</div>
+
+                <div class="btn-group">
+                    <button class="btn btn-decline" onclick="processRequest('req-1', false)">Decline</button>
+                    <button class="btn btn-accept" onclick="processRequest('req-1', true)">Approve</button>
+                </div>
             </div>
-            <div class="req-title">Shift Swap: Nov 26</div>
-            
-            <div class="swap-visual">
-                <strong>K. Davis</strong> 
-                <span class="arrow-icon">&rarr;</span> 
-                <strong>R. Sanchez</strong>
-            </div>
-
-            <div class="req-details">
-                Role: Chassis Marriage (Line 2)<br>
-                Time: 06:00 – 16:30 (10h)
-            </div>
-
-            <div class="match-badge">✅ Skills Match Verified</div>
-            <div class="match-badge" style="background:#e3f2fd; color:#0277bd;">ℹ️ No Overtime Impact</div>
-
-            <div class="btn-group">
-                <button class="btn btn-decline" onclick="processRequest('req-1', false)">Decline</button>
-                <button class="btn btn-accept" onclick="processRequest('req-1', true)">Approve</button>
+            <div style="text-align:center; color:#999; font-size:13px; margin-top:20px; display:none;" id="empty-reqs">
+                No pending requests.
             </div>
         </div>
 
-        <div style="text-align:center; color:#999; font-size:13px; margin-top:20px;" id="empty-state" hidden>
-            No pending requests.
+        <div id="view-pickups" style="display:none;">
+            <div class="action-card pickup-type" id="pickup-1">
+                <div class="req-header">
+                    <span>Urgency: High</span>
+                    <span>#OP-101</span>
+                </div>
+                <div class="req-title">Unfilled Shift</div>
+                <div class="req-details">
+                    Role: Paint Shop - Clear Coat<br>
+                    Time: Nov 26 | 16:30 – 02:30
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-assign" onclick="assignShift('pickup-1')">Assign Staff</button>
+                </div>
+            </div>
+            <div class="action-card pickup-type" id="pickup-2">
+                <div class="req-header">
+                    <span>Urgency: Medium</span>
+                    <span>#OP-102</span>
+                </div>
+                <div class="req-title">Unfilled Shift</div>
+                <div class="req-details">
+                    Role: Material Handling<br>
+                    Time: Nov 29 | 06:00 – 14:00
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-assign" onclick="assignShift('pickup-2')">Assign Staff</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-staff-msg" style="display:none; text-align:center; color:#666; margin-top:40px;">
+            <div style="font-size:40px; margin-bottom:10px;">👷</div>
+            Filtering Roster for Active Staff...<br>
+            <small>See Right Panel</small>
         </div>
 
     </div>
 
     <div class="panel-roster">
-        <div class="panel-header">Roster View: Wed, Nov 26</div>
+        <div class="panel-header">
+            <span id="roster-title">Team Roster</span>
+            <span style="font-size:12px; color:#003478; cursor:pointer;" onclick="resetRoster()">Reset Filter</span>
+        </div>
         <table id="roster-table">
             <thead>
                 <tr>
@@ -253,44 +313,44 @@
                     <th>Employee</th>
                     <th>Zone</th>
                     <th>Role</th>
-                    <th>Shift</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
+                <tr class="roster-row status-active">
                     <td><span class="status-dot dot-active"></span>Active</td>
                     <td>J. Miller</td>
                     <td>Zone C</td>
                     <td>Trim Assembly</td>
-                    <td>06:00 - 16:30</td>
                 </tr>
-                <tr id="roster-row-davis">
+                <tr class="roster-row status-active" id="row-davis">
                     <td><span class="status-dot dot-active"></span>Active</td>
                     <td><strong>K. Davis</strong></td>
                     <td>Zone B</td>
                     <td>Chassis Marriage</td>
-                    <td>06:00 - 16:30</td>
                 </tr>
-                <tr>
+                <tr class="roster-row status-active">
                     <td><span class="status-dot dot-active"></span>Active</td>
                     <td>T. Wilson</td>
                     <td>Zone C</td>
                     <td>Trim Assembly</td>
-                    <td>06:00 - 16:30</td>
                 </tr>
-                <tr id="roster-row-sanchez">
+                <tr class="roster-row status-off" id="row-sanchez">
                     <td><span class="status-dot dot-off"></span>Off</td>
                     <td><strong>R. Sanchez</strong></td>
-                    <td>N/A</td>
-                    <td>Floater (Off)</td>
                     <td>-</td>
+                    <td>Floater (Off)</td>
                 </tr>
-                <tr>
+                <tr class="roster-row status-active">
                     <td><span class="status-dot dot-active"></span>Active</td>
                     <td>M. Johnson</td>
                     <td>Zone A</td>
                     <td>Paint Shop</td>
-                    <td>06:00 - 16:30</td>
+                </tr>
+                <tr class="roster-row status-off">
+                    <td><span class="status-dot dot-off"></span>Off</td>
+                    <td>B. Smith</td>
+                    <td>-</td>
+                    <td>Leave</td>
                 </tr>
             </tbody>
         </table>
@@ -301,30 +361,78 @@
 <div id="toast">Action Saved</div>
 
 <script>
-const EMPLOYEE_ACCESSOR_ID = "692f4f895645392f2317a142"; // K. Davis ID
+// --- VIEW SWITCHING LOGIC ---
+function switchView(viewName) {
+    // 1. Reset KPI Styles
+    document.querySelectorAll('.kpi-card').forEach(el => el.classList.remove('active'));
+    
+    // 2. Hide all Left Panel Views
+    document.getElementById('view-requests').style.display = 'none';
+    document.getElementById('view-pickups').style.display = 'none';
+    document.getElementById('view-staff-msg').style.display = 'none';
+
+    // 3. Reset Roster Filter (Default)
+    const rows = document.querySelectorAll('.roster-row');
+    rows.forEach(row => row.classList.remove('hidden-row'));
+    document.getElementById('roster-title').innerText = "Team Roster (All)";
+
+    // 4. Activate Logic based on Selection
+    if(viewName === 'requests') {
+        document.getElementById('kpi-reqs').classList.add('active');
+        document.getElementById('left-panel-title').innerText = "Pending Requests";
+        document.getElementById('view-requests').style.display = 'block';
+    } 
+    else if(viewName === 'pickups') {
+        document.getElementById('kpi-open').classList.add('active');
+        document.getElementById('left-panel-title').innerText = "Open Shifts Needed";
+        document.getElementById('view-pickups').style.display = 'block';
+    }
+    else if(viewName === 'staff') {
+        document.getElementById('kpi-staff').classList.add('active');
+        document.getElementById('left-panel-title').innerText = "Staff Overview";
+        document.getElementById('view-staff-msg').style.display = 'block';
+        
+        // FILTER LOGIC: Hide "Off" status rows
+        filterRosterByActive();
+    }
+}
+
+function filterRosterByActive() {
+    const rows = document.querySelectorAll('.roster-row');
+    let count = 0;
+    rows.forEach(row => {
+        if(row.classList.contains('status-off')) {
+            row.classList.add('hidden-row');
+        } else {
+            count++;
+        }
+    });
+    document.getElementById('roster-title').innerText = `Active Staff (${count})`;
+}
+
+function resetRoster() {
+    const rows = document.querySelectorAll('.roster-row');
+    rows.forEach(row => row.classList.remove('hidden-row'));
+    document.getElementById('roster-title').innerText = "Team Roster (All)";
+}
+
+
+// --- ACTION LOGIC ---
+const EMPLOYEE_ACCESSOR_ID = "692f4f895645392f2317a142"; 
 
 async function processRequest(cardId, isApproved) {
     const card = document.getElementById(cardId);
-    
-    // 1. Animate removal
     card.style.opacity = '0.5';
-    card.style.transform = 'scale(0.98)';
     
     setTimeout(async () => {
-        // Remove card from DOM
         card.style.display = 'none';
-        
-        // Check if empty
-        document.getElementById('empty-state').hidden = false;
+        document.getElementById('empty-reqs').style.display = 'block';
         document.getElementById('pending-count').innerText = "0";
-        document.getElementById('pending-count').parentElement.parentElement.style.borderBottom = "none";
 
         if (isApproved) {
-            // UPDATE ROSTER TABLE VISUALLY
-            updateRoster();
-            
-            showToast("Swap Approved. Roster Updated.");
-            await sendNotification("Your swap request with R. Sanchez was Approved.", "Swap Approved");
+            updateRosterTable();
+            showToast("Swap Approved");
+            await sendNotification("Your swap request was Approved.", "Swap Approved");
         } else {
             showToast("Request Declined", "error");
             await sendNotification("Your swap request was declined.", "Request Declined");
@@ -332,36 +440,27 @@ async function processRequest(cardId, isApproved) {
     }, 400);
 }
 
-function updateRoster() {
-    // Visual logic to show the schedule change in the table
-    
-    // 1. Update K. Davis to "Off" (or swapped out)
-    const rowDavis = document.getElementById("roster-row-davis");
-    rowDavis.style.backgroundColor = "#ffebee"; // highlight red briefly
+function assignShift(cardId) {
+    const card = document.getElementById(cardId);
+    card.style.opacity = '0.5';
     setTimeout(() => {
-        rowDavis.innerHTML = `
-            <td><span class="status-dot dot-off"></span>Swapped</td>
-            <td style="text-decoration:line-through; color:#999;">K. Davis</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-        `;
-        rowDavis.style.backgroundColor = "transparent";
-    }, 500);
+        card.style.display = 'none';
+        showToast("Shift Assigned Successfully");
+    }, 400);
+}
 
-    // 2. Update R. Sanchez to "Active"
-    const rowSanchez = document.getElementById("roster-row-sanchez");
-    rowSanchez.style.backgroundColor = "#e8f5e9"; // highlight green briefly
-    setTimeout(() => {
-        rowSanchez.innerHTML = `
-            <td><span class="status-dot dot-active"></span>Active</td>
-            <td><strong>R. Sanchez</strong></td>
-            <td>Zone B</td>
-            <td>Chassis Marriage</td>
-            <td>06:00 - 16:30</td>
-        `;
-        rowSanchez.style.backgroundColor = "transparent";
-    }, 500);
+function updateRosterTable() {
+    // Visual update for K. Davis -> Swapped
+    const rowDavis = document.getElementById("row-davis");
+    rowDavis.classList.add('status-off');
+    rowDavis.classList.remove('status-active');
+    rowDavis.innerHTML = `<td><span class="status-dot dot-off"></span>Swapped</td><td style="text-decoration:line-through; color:#999;">K. Davis</td><td>-</td><td>-</td>`;
+
+    // Visual update for R. Sanchez -> Active
+    const rowSanchez = document.getElementById("row-sanchez");
+    rowSanchez.classList.add('status-active');
+    rowSanchez.classList.remove('status-off');
+    rowSanchez.innerHTML = `<td><span class="status-dot dot-active"></span>Active</td><td><strong>R. Sanchez</strong></td><td>Zone B</td><td>Chassis Marriage</td>`;
 }
 
 function showToast(message, type = 'success') {
@@ -373,7 +472,6 @@ function showToast(message, type = 'success') {
 }
 
 async function sendNotification(msg) {
-    // Staffbase Notification API
     try {
         await fetch("https://app.staffbase.com/api/branch/notifications", {
             method: "POST",
