@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ford Manager Dashboard</title>
+
+<style>
+    /* --- FORD BRANDING & RESET --- */
+    :root {
+        --ford-blue: #003478;
+        --ford-light-blue: #eef4ff;
+        --ford-gray-bg: #f4f5f8;
+        --ford-border: #d0d0d0;
+        --success: #2e7d32;
+        --danger: #d32f2f;
+        --warning: #fca311;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: "Ford Antenna", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--ford-gray-bg);
+        margin: 0;
+        padding: 20px;
+        color: #333;
+    }
+
+    /* --- LAYOUT GRID (Desktop First) --- */
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 350px 1fr; /* Left sidebar fixed, right fluid */
+        grid-template-rows: auto 1fr;
+        gap: 20px;
+    }
+
+    /* HEADER (Spans full width) */
+    .header {
+        grid-column: 1 / -1;
+        background: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        border-top: 5px solid var(--ford-blue);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header h1 { margin: 0; font-size: 20px; color: var(--ford-blue); text-transform: uppercase; letter-spacing: 0.5px; }
+    .header-meta { font-size: 14px; color: #666; font-weight: 600; }
+
+    /* KPI CARDS (Spans full width) */
+    .kpi-row {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .kpi-card {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .kpi-number { font-size: 24px; font-weight: 700; color: var(--ford-blue); }
+    .kpi-label { font-size: 13px; color: #666; text-transform: uppercase; font-weight: 600; }
+    .kpi-icon { font-size: 24px; opacity: 0.2; }
+
+    /* --- LEFT PANEL: REQUESTS --- */
+    .panel-requests {
+        background: white;
+        border-radius: 6px;
+        padding: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        height: fit-content;
+    }
+
+    .panel-header {
+        font-size: 16px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #eee;
+    }
+
+    .request-card {
+        border: 1px solid var(--ford-border);
+        border-left: 5px solid var(--warning);
+        background: #fff;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+
+    .req-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: #666; font-weight: 600; }
+    .req-title { font-size: 15px; font-weight: 700; color: var(--ford-blue); margin-bottom: 5px; }
+    .req-details { font-size: 13px; color: #444; margin-bottom: 10px; line-height: 1.4; }
+    
+    .swap-visual {
+        background: var(--ford-light-blue);
+        padding: 8px;
+        border-radius: 4px;
+        margin: 10px 0;
+        font-size: 13px;
+    }
+    .arrow-icon { color: var(--ford-blue); font-weight: bold; margin: 0 5px; }
+
+    .match-badge {
+        display: inline-block;
+        background: #e8f5e9;
+        color: var(--success);
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 6px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+
+    .btn-group { display: flex; gap: 10px; }
+    .btn {
+        flex: 1;
+        padding: 8px;
+        border: none;
+        border-radius: 4px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    .btn-accept { background: var(--ford-blue); color: white; }
+    .btn-accept:hover { background: #002555; }
+    .btn-decline { background: white; border: 1px solid var(--danger); color: var(--danger); }
+    .btn-decline:hover { background: #fff0f0; }
+
+    /* --- RIGHT PANEL: ROSTER TABLE --- */
+    .panel-roster {
+        background: white;
+        border-radius: 6px;
+        padding: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 12px 8px; border-bottom: 2px solid #eee; color: #666; font-size: 12px; text-transform: uppercase; }
+    td { padding: 12px 8px; border-bottom: 1px solid #f0f0f0; color: #333; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background-color: #f9f9f9; }
+
+    .status-dot { height: 8px; width: 8px; background-color: #ccc; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    .dot-active { background-color: var(--success); }
+    .dot-off { background-color: #ccc; }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .dashboard-container { grid-template-columns: 1fr; }
+        .kpi-row { grid-template-columns: 1fr; }
+    }
+
+    /* TOAST */
+    #toast { visibility: hidden; min-width: 250px; background-color: var(--success); color: #fff; text-align: center; border-radius: 4px; padding: 15px; position: fixed; right: 30px; bottom: 30px; z-index: 9999; opacity: 0; transition: opacity 0.3s; }
+    #toast.show { visibility: visible; opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="dashboard-container">
+
+    <div class="header">
+        <div style="display:flex; align-items:center;">
+            <img src="https://www.ford.com/etc/designs/ford-v-3/clientlibs_base/images/ford-oval-blue.svg" alt="Ford" style="height:30px; margin-right:15px;">
+            <h1>Supervisor Dashboard</h1>
+        </div>
+        <div class="header-meta">
+            Shift A • Dearborn Truck Plant • Nov 25, 2025
+        </div>
+    </div>
+
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-number">24/25</div>
+                <div class="kpi-label">Staff On Floor</div>
+            </div>
+            <div class="kpi-icon">👷</div>
+        </div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--warning);">
+            <div>
+                <div class="kpi-number" id="pending-count">1</div>
+                <div class="kpi-label">Pending Requests</div>
+            </div>
+            <div class="kpi-icon">⚠️</div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-number">2</div>
+                <div class="kpi-label">Open Pickups</div>
+            </div>
+            <div class="kpi-icon">📅</div>
+        </div>
+    </div>
+
+    <div class="panel-requests">
+        <div class="panel-header">Swap Requests</div>
+
+        <div class="request-card" id="req-1">
+            <div class="req-header">
+                <span>Received: 2 hours ago</span>
+                <span>ID: #SW-992</span>
+            </div>
+            <div class="req-title">Shift Swap: Nov 26</div>
+            
+            <div class="swap-visual">
+                <strong>K. Davis</strong> 
+                <span class="arrow-icon">&rarr;</span> 
+                <strong>R. Sanchez</strong>
+            </div>
+
+            <div class="req-details">
+                Role: Chassis Marriage (Line 2)<br>
+                Time: 06:00 – 16:30 (10h)
+            </div>
+
+            <div class="match-badge">✅ Skills Match Verified</div>
+            <div class="match-badge" style="background:#e3f2fd; color:#0277bd;">ℹ️ No Overtime Impact</div>
+
+            <div class="btn-group">
+                <button class="btn btn-decline" onclick="processRequest('req-1', false)">Decline</button>
+                <button class="btn btn-accept" onclick="processRequest('req-1', true)">Approve</button>
+            </div>
+        </div>
+
+        <div style="text-align:center; color:#999; font-size:13px; margin-top:20px;" id="empty-state" hidden>
+            No pending requests.
+        </div>
+
+    </div>
+
+    <div class="panel-roster">
+        <div class="panel-header">Roster View: Wed, Nov 26</div>
+        <table id="roster-table">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Employee</th>
+                    <th>Zone</th>
+                    <th>Role</th>
+                    <th>Shift</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="status-dot dot-active"></span>Active</td>
+                    <td>J. Miller</td>
+                    <td>Zone C</td>
+                    <td>Trim Assembly</td>
+                    <td>06:00 - 16:30</td>
+                </tr>
+                <tr id="roster-row-davis">
+                    <td><span class="status-dot dot-active"></span>Active</td>
+                    <td><strong>K. Davis</strong></td>
+                    <td>Zone B</td>
+                    <td>Chassis Marriage</td>
+                    <td>06:00 - 16:30</td>
+                </tr>
+                <tr>
+                    <td><span class="status-dot dot-active"></span>Active</td>
+                    <td>T. Wilson</td>
+                    <td>Zone C</td>
+                    <td>Trim Assembly</td>
+                    <td>06:00 - 16:30</td>
+                </tr>
+                <tr id="roster-row-sanchez">
+                    <td><span class="status-dot dot-off"></span>Off</td>
+                    <td><strong>R. Sanchez</strong></td>
+                    <td>N/A</td>
+                    <td>Floater (Off)</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><span class="status-dot dot-active"></span>Active</td>
+                    <td>M. Johnson</td>
+                    <td>Zone A</td>
+                    <td>Paint Shop</td>
+                    <td>06:00 - 16:30</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<div id="toast">Action Saved</div>
+
+<script>
+const EMPLOYEE_ACCESSOR_ID = "692f4f895645392f2317a142"; // K. Davis ID
+
+async function processRequest(cardId, isApproved) {
+    const card = document.getElementById(cardId);
+    
+    // 1. Animate removal
+    card.style.opacity = '0.5';
+    card.style.transform = 'scale(0.98)';
+    
+    setTimeout(async () => {
+        // Remove card from DOM
+        card.style.display = 'none';
+        
+        // Check if empty
+        document.getElementById('empty-state').hidden = false;
+        document.getElementById('pending-count').innerText = "0";
+        document.getElementById('pending-count').parentElement.parentElement.style.borderBottom = "none";
+
+        if (isApproved) {
+            // UPDATE ROSTER TABLE VISUALLY
+            updateRoster();
+            
+            showToast("Swap Approved. Roster Updated.");
+            await sendNotification("Your swap request with R. Sanchez was Approved.", "Swap Approved");
+        } else {
+            showToast("Request Declined", "error");
+            await sendNotification("Your swap request was declined.", "Request Declined");
+        }
+    }, 400);
+}
+
+function updateRoster() {
+    // Visual logic to show the schedule change in the table
+    
+    // 1. Update K. Davis to "Off" (or swapped out)
+    const rowDavis = document.getElementById("roster-row-davis");
+    rowDavis.style.backgroundColor = "#ffebee"; // highlight red briefly
+    setTimeout(() => {
+        rowDavis.innerHTML = `
+            <td><span class="status-dot dot-off"></span>Swapped</td>
+            <td style="text-decoration:line-through; color:#999;">K. Davis</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+        `;
+        rowDavis.style.backgroundColor = "transparent";
+    }, 500);
+
+    // 2. Update R. Sanchez to "Active"
+    const rowSanchez = document.getElementById("roster-row-sanchez");
+    rowSanchez.style.backgroundColor = "#e8f5e9"; // highlight green briefly
+    setTimeout(() => {
+        rowSanchez.innerHTML = `
+            <td><span class="status-dot dot-active"></span>Active</td>
+            <td><strong>R. Sanchez</strong></td>
+            <td>Zone B</td>
+            <td>Chassis Marriage</td>
+            <td>06:00 - 16:30</td>
+        `;
+        rowSanchez.style.backgroundColor = "transparent";
+    }, 500);
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById("toast");
+    toast.innerText = message;
+    toast.style.backgroundColor = type === 'error' ? "#d32f2f" : "#2e7d32";
+    toast.className = "show";
+    setTimeout(() => { toast.className = ""; }, 3000);
+}
+
+async function sendNotification(msg) {
+    // Staffbase Notification API
+    try {
+        await fetch("https://app.staffbase.com/api/branch/notifications", {
+            method: "POST",
+            headers: {
+                "Authorization":"Basic NjkzMWUzM2EyYWU0NGMxZWE4ZTI4NTY2OkMqTnQ2YSRJNWF5RzF0dkR1a0hFdW0hbGFEMTRsZk1+S185ITcxQ09jV1Jsb3ctJmpDczMrKmFveXdRSikyLXU=",
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+                "accessorIds": [EMPLOYEE_ACCESSOR_ID], 
+                "channels": ["notificationCenter", "push"],
+                "content": { "en_US": { "text": msg } }
+            })
+        });
+    } catch (e) { console.error(e); }
+}
+</script>
+
+</body>
+</html>
