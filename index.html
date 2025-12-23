@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ford Manager Dashboard - Patrick Anderson Update</title>
+<title>Ford Manager Dashboard - Group Leader View</title>
 
 <style>
     /* --- FORD BRANDING & RESET --- */
@@ -35,6 +35,7 @@
         grid-template-columns: 350px 1fr; 
         grid-template-rows: auto 1fr;
         gap: 20px;
+        height: 90vh;
     }
 
     /* HEADER */
@@ -85,8 +86,7 @@
         border-radius: 6px;
         padding: 20px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        height: fit-content;
-        min-height: 300px;
+        overflow-y: auto;
     }
 
     .panel-header {
@@ -127,13 +127,32 @@
     .btn-assign:hover { background: #002555; }
 
     /* --- RIGHT PANEL: ROSTER TABLE --- */
-    .panel-roster { background: white; border-radius: 6px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .panel-roster { 
+        background: white; 
+        border-radius: 6px; 
+        padding: 0; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .roster-header-area { padding: 20px; border-bottom: 1px solid #eee; display:flex; justify-content:space-between;}
+    
+    .table-container {
+        flex: 1;
+        overflow-y: auto; 
+    }
+
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th { text-align: left; padding: 12px 8px; border-bottom: 2px solid #eee; color: #666; font-size: 12px; text-transform: uppercase; }
-    td { padding: 12px 8px; border-bottom: 1px solid #f0f0f0; color: #333; }
-    tr:last-child td { border-bottom: none; }
+    th { text-align: left; padding: 12px 15px; border-bottom: 2px solid #eee; color: #666; font-size: 12px; text-transform: uppercase; background: #fff; position: sticky; top: 0; z-index: 10; }
+    td { padding: 10px 15px; border-bottom: 1px solid #f0f0f0; color: #333; }
     tr:hover { background-color: #f9f9f9; }
     tr.hidden-row { display: none; }
+
+    /* Zone Headers */
+    .zone-header-row { background-color: #eef4ff; pointer-events: none; }
+    .zone-header-row td { color: var(--ford-blue); font-weight: 700; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid #dae7ff; padding: 8px 15px; }
 
     .status-dot { height: 8px; width: 8px; background-color: #ccc; border-radius: 50%; display: inline-block; margin-right: 5px; }
     .dot-active { background-color: var(--success); }
@@ -143,10 +162,6 @@
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; }
     .modal-content { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     
-    .modal h3 { margin-top: 0; color: var(--ford-blue); border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    .close-btn { float: right; font-size: 24px; cursor: pointer; color: #999; line-height: 20px; }
-    
-    /* Smart Match Section */
     .smart-match-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
     .smart-label { color: var(--success); font-weight: 700; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; display: block; }
     .smart-name { font-size: 16px; font-weight: 700; color: #111; display: flex; align-items: center; gap: 6px;}
@@ -160,8 +175,9 @@
 
     /* RESPONSIVE */
     @media (max-width: 768px) {
-        .dashboard-container { grid-template-columns: 1fr; }
+        .dashboard-container { grid-template-columns: 1fr; height: auto; }
         .kpi-row { grid-template-columns: 1fr; }
+        .panel-roster { height: 500px; }
     }
 
     #toast { visibility: hidden; min-width: 250px; background-color: var(--success); color: #fff; text-align: center; border-radius: 4px; padding: 15px; position: fixed; right: 30px; bottom: 30px; z-index: 99999; opacity: 0; transition: opacity 0.3s; }
@@ -185,7 +201,7 @@
 
     <div class="kpi-row">
         <div class="kpi-card" id="kpi-staff" onclick="switchView('staff')">
-            <div><div class="kpi-number">24/25</div><div class="kpi-label">Staff On Floor</div></div>
+            <div><div class="kpi-number" id="staff-count">--/25</div><div class="kpi-label">Staff On Floor</div></div>
             <div class="kpi-icon">👷</div>
         </div>
         <div class="kpi-card active" id="kpi-reqs" onclick="switchView('requests')">
@@ -206,7 +222,7 @@
                 <div class="req-header"><span>2 hrs ago</span><span>#SW-992</span></div>
                 <div class="req-title">Shift Swap Request</div>
                 <div class="swap-visual"><strong>K. Davis</strong> &rarr; <strong>R. Sanchez</strong></div>
-                <div class="req-details">Role: Chassis Marriage (Line 2)<br>Time: Nov 26 | 06:00 – 16:30</div>
+                <div class="req-details">Role: Chassis Marriage (Zone B)<br>Time: Nov 26 | 06:00 – 16:30</div>
                 <div class="match-badge">✅ Skills Match Verified</div>
                 <div class="btn-group">
                     <button class="btn btn-decline" onclick="processRequest('req-1', false)">Decline</button>
@@ -238,27 +254,24 @@
     </div>
 
     <div class="panel-roster">
-        <div class="panel-header">
-            <span id="roster-title">Team Roster</span>
+        <div class="roster-header-area">
+            <span id="roster-title" style="font-weight:700;">Team Roster</span>
             <span style="font-size:12px; color:#003478; cursor:pointer;" onclick="resetRoster()">Reset Filter</span>
         </div>
-        <table id="roster-table">
-            <thead><tr><th>Status</th><th>Employee</th><th>Zone</th><th>Role</th></tr></thead>
-            <tbody>
-                <tr class="roster-row status-active"><td><span class="status-dot dot-active"></span>Active</td><td>J. Miller</td><td>Zone C</td><td>Trim Assembly</td></tr>
-                <tr class="roster-row status-active" id="row-davis"><td><span class="status-dot dot-active"></span>Active</td><td><strong>K. Davis</strong></td><td>Zone B</td><td>Chassis Marriage</td></tr>
-                <tr class="roster-row status-active"><td><span class="status-dot dot-active"></span>Active</td><td>T. Wilson</td><td>Zone C</td><td>Trim Assembly</td></tr>
-                <tr class="roster-row status-off" id="row-sanchez"><td><span class="status-dot dot-off"></span>Off</td><td><strong>R. Sanchez</strong></td><td>-</td><td>Floater (Off)</td></tr>
-                <tr class="roster-row status-off" id="row-panderson"><td><span class="status-dot dot-off"></span>Off</td><td>Patrick Anderson</td><td>-</td><td>Leave</td></tr>
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table id="roster-table">
+                <thead><tr><th>Status</th><th>Employee</th><th>Role</th></tr></thead>
+                <tbody id="roster-body">
+                    </tbody>
+            </table>
+        </div>
     </div>
 
 </div>
 
 <div id="assignModal" class="modal">
     <div class="modal-content">
-        <span class="close-btn" onclick="closeAssignModal()">&times;</span>
+        <span style="float:right; font-size:24px; cursor:pointer;" onclick="closeAssignModal()">&times;</span>
         <h3>Assign Staff</h3>
         
         <p style="font-size:13px; color:#666; margin-bottom:15px;">Target Role: <strong id="modal-role-text">Paint Shop</strong></p>
@@ -280,20 +293,105 @@
             <option value="R. Sanchez">R. Sanchez (Floater)</option>
             <option value="T. Wilson">T. Wilson (Trim A)</option>
         </select>
-
         <button class="btn" style="border:1px solid #ccc; width:100%;" onclick="confirmAssignment(document.getElementById('manual-assign-select').value)">Assign Selected</button>
-
     </div>
 </div>
 
 <div id="toast">Action Saved</div>
 
 <script>
-// --- GLOBAL VARS ---
+// --- CONFIG & STATE ---
 const DAVIS_ID = "692f4f895645392f2317a142"; 
-const PATRICK_ID = "691266696842ab0152b7fbb7"; // Added Patrick's ID
-
+const PATRICK_ID = "691266696842ab0152b7fbb7"; 
 let activePickupId = null;
+
+// REALISTIC GROUP LEADER ROSTER (25 People organized by Zone)
+let rosterData = [
+    // ZONE A: TRIM & DOOR LINE (8 People)
+    { zone: "Zone A - Trim", name: "J. Miller", role: "Door Sub-Assembly", status: "active" },
+    { zone: "Zone A - Trim", name: "A. Williams", role: "Wiring Harness", status: "active" },
+    { zone: "Zone A - Trim", name: "M. Johnson", role: "Glass Install", status: "active" },
+    { zone: "Zone A - Trim", name: "L. Walker", role: "Interior Trim", status: "active" },
+    { zone: "Zone A - Trim", name: "P. King", role: "Sealer Apply", status: "active" },
+    { zone: "Zone A - Trim", name: "O. Young", role: "Door Hang", status: "active" },
+    { zone: "Zone A - Trim", name: "F. Martinez", role: "Trim Inspection", status: "active" },
+    { zone: "Zone A - Trim", name: "B. Smith", role: "Team Leader", status: "active" },
+
+    // ZONE B: CHASSIS & ENGINE (9 People)
+    { zone: "Zone B - Chassis", name: "K. Davis", role: "Chassis Marriage", status: "active", id: "davis-row" },
+    { zone: "Zone B - Chassis", name: "C. Brown", role: "Engine Mount", status: "active" },
+    { zone: "Zone B - Chassis", name: "E. Garcia", role: "Fluid Fill", status: "active" },
+    { zone: "Zone B - Chassis", name: "H. Clark", role: "Wheel Alignment", status: "active" },
+    { zone: "Zone B - Chassis", name: "K. Lee", role: "Suspension", status: "active" },
+    { zone: "Zone B - Chassis", name: "N. Allen", role: "Brake Install", status: "active" },
+    { zone: "Zone B - Chassis", name: "S. Green", role: "Exhaust Fit", status: "active" },
+    { zone: "Zone B - Chassis", name: "D. Jones", role: "Frame Check", status: "active" },
+    { zone: "Zone B - Chassis", name: "R. Scott", role: "Team Leader", status: "active" },
+
+    // ZONE C: FINAL LINE (5 People + Floaters)
+    { zone: "Zone C - Final", name: "T. Wilson", role: "Final Polish", status: "active" },
+    { zone: "Zone C - Final", name: "G. Robinson", role: "Quality Gate", status: "active" },
+    { zone: "Zone C - Final", name: "J. Lewis", role: "Roll Test", status: "active" },
+    { zone: "Zone C - Final", name: "I. Rodriguez", role: "Shipping Wrap", status: "active" },
+    { zone: "Zone C - Final", name: "T. Baker", role: "Team Leader", status: "active" },
+
+    // OFF / FLOATERS
+    { zone: "Unassigned / Off", name: "R. Sanchez", role: "Floater", status: "off", id: "sanchez-row" },
+    { zone: "Unassigned / Off", name: "Patrick Anderson", role: "Floater", status: "off", id: "patrick-row" },
+    { zone: "Unassigned / Off", name: "Q. Wright", role: "Leave", status: "off" },
+];
+
+// --- INIT ---
+window.onload = function() {
+    renderRoster();
+    updateStaffKPI();
+};
+
+// --- RENDER LOGIC ---
+function renderRoster() {
+    const tbody = document.getElementById('roster-body');
+    tbody.innerHTML = '';
+    
+    let currentZone = "";
+
+    rosterData.forEach(person => {
+        // Insert Zone Header if zone changes
+        if (person.zone !== currentZone) {
+            currentZone = person.zone;
+            tbody.insertAdjacentHTML('beforeend', `<tr class="zone-header-row"><td colspan="3">${currentZone}</td></tr>`);
+        }
+
+        let rowClass = person.status === 'active' ? 'status-active' : 'status-off';
+        let dotClass = person.status === 'active' ? 'dot-active' : 'dot-off';
+        let statusText = person.status === 'active' ? 'Active' : 'Off';
+        let rowId = person.id ? `id="${person.id}"` : '';
+        let nameHtml = person.name;
+
+        if(person.status === 'swapped') {
+            statusText = 'Swapped';
+            dotClass = 'dot-off';
+            nameHtml = `<span style="text-decoration:line-through; color:#999;">${person.name}</span>`;
+        }
+        
+        if(person.name === "Patrick Anderson" || person.name === "R. Sanchez") {
+            nameHtml = `<strong>${person.name}</strong>`;
+        }
+
+        const html = `
+        <tr class="roster-row ${rowClass}" ${rowId}>
+            <td><span class="status-dot ${dotClass}"></span>${statusText}</td>
+            <td>${nameHtml}</td>
+            <td>${person.role}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', html);
+    });
+}
+
+function updateStaffKPI() {
+    const total = rosterData.length;
+    const active = rosterData.filter(p => p.status === 'active').length;
+    document.getElementById('staff-count').innerText = `${active}/${total}`;
+}
 
 // --- VIEW SWITCHING ---
 function switchView(viewName) {
@@ -302,7 +400,10 @@ function switchView(viewName) {
     document.getElementById('view-pickups').style.display = 'none';
     document.getElementById('view-staff-msg').style.display = 'none';
     
-    resetRoster(); // Reset table filter by default
+    // Reset Filter
+    document.querySelectorAll('.roster-row').forEach(row => row.classList.remove('hidden-row'));
+    document.querySelectorAll('.zone-header-row').forEach(row => row.style.display = 'table-row');
+    document.getElementById('roster-title').innerText = "Team Roster (All)";
 
     if(viewName === 'requests') {
         document.getElementById('kpi-reqs').classList.add('active');
@@ -318,22 +419,19 @@ function switchView(viewName) {
         document.getElementById('kpi-staff').classList.add('active');
         document.getElementById('left-panel-title').innerText = "Staff Overview";
         document.getElementById('view-staff-msg').style.display = 'block';
-        filterRosterByActive();
+        
+        // Filter Logic: Hide Off rows AND Hide Zone Headers if empty (simplified for now just hides rows)
+        document.querySelectorAll('.roster-row').forEach(row => {
+            if(row.classList.contains('status-off')) row.classList.add('hidden-row');
+        });
+        const activeCount = rosterData.filter(p => p.status === 'active').length;
+        document.getElementById('roster-title').innerText = `Active Staff (${activeCount})`;
     }
-}
-
-function filterRosterByActive() {
-    const rows = document.querySelectorAll('.roster-row');
-    let count = 0;
-    rows.forEach(row => {
-        if(row.classList.contains('status-off')) row.classList.add('hidden-row');
-        else count++;
-    });
-    document.getElementById('roster-title').innerText = `Active Staff (${count})`;
 }
 
 function resetRoster() {
     document.querySelectorAll('.roster-row').forEach(row => row.classList.remove('hidden-row'));
+    document.querySelectorAll('.zone-header-row').forEach(row => row.style.display = 'table-row');
     document.getElementById('roster-title').innerText = "Team Roster (All)";
 }
 
@@ -347,12 +445,19 @@ async function processRequest(cardId, isApproved) {
         document.getElementById('pending-count').innerText = "0";
 
         if (isApproved) {
-            // Update Roster: Davis out, Sanchez in
-            document.getElementById("row-davis").innerHTML = `<td><span class="status-dot dot-off"></span>Swapped</td><td style="text-decoration:line-through; color:#999;">K. Davis</td><td>-</td><td>-</td>`;
-            document.getElementById("row-davis").className = "roster-row status-off";
+            // Update Data Model
+            const davis = rosterData.find(p => p.name === "K. Davis");
+            davis.status = 'swapped';
             
-            document.getElementById("row-sanchez").innerHTML = `<td><span class="status-dot dot-active"></span>Active</td><td><strong>R. Sanchez</strong></td><td>Zone B</td><td>Chassis Marriage</td>`;
-            document.getElementById("row-sanchez").className = "roster-row status-active";
+            const sanchez = rosterData.find(p => p.name === "R. Sanchez");
+            sanchez.status = 'active';
+            sanchez.zone = "Zone B - Chassis"; // Moves to Zone B
+            sanchez.role = "Chassis Marriage";
+
+            // Re-Render sorted by Zone
+            rosterData.sort((a,b) => a.zone.localeCompare(b.zone));
+            renderRoster();
+            updateStaffKPI();
 
             showToast("Swap Approved");
             await sendNotification("Your swap request was Approved.", [DAVIS_ID]);
@@ -363,48 +468,43 @@ async function processRequest(cardId, isApproved) {
     }, 400);
 }
 
-// --- SMART ASSIGN LOGIC ---
+// --- ASSIGN LOGIC ---
 function openAssignModal(pickupId, roleName) {
     activePickupId = pickupId;
     document.getElementById('modal-role-text').innerText = roleName;
     document.getElementById('assignModal').style.display = 'flex';
 }
-
-function closeAssignModal() {
-    document.getElementById('assignModal').style.display = 'none';
-}
+function closeAssignModal() { document.getElementById('assignModal').style.display = 'none'; }
 
 async function confirmAssignment(employeeName) {
     if(!employeeName) return; 
-    
     closeAssignModal();
     
-    // Hide the pickup card
     const card = document.getElementById(activePickupId);
     card.style.opacity = '0.5';
     
     setTimeout(async () => {
         card.style.display = 'none';
         
-        // Update KPI
         let count = parseInt(document.getElementById('open-count').innerText);
         document.getElementById('open-count').innerText = Math.max(0, count - 1);
-        
-        // If Patrick Anderson was assigned (Smart Match), update roster
-        if(employeeName === "Patrick Anderson") {
-            const row = document.getElementById("row-panderson");
-            row.innerHTML = `<td><span class="status-dot dot-active"></span>Active</td><td><strong>Patrick Anderson</strong></td><td>Zone A</td><td>Paint Shop</td>`;
-            row.className = "roster-row status-active";
+        if(document.getElementById('open-count').innerText == "0") document.getElementById('empty-pickups').style.display = 'block';
 
-            // Send Notification specifically to Patrick
+        if(employeeName === "Patrick Anderson") {
+            const patrick = rosterData.find(p => p.name === "Patrick Anderson");
+            patrick.status = 'active';
+            patrick.zone = "Zone A - Trim"; // Moves to Zone A
+            patrick.role = "Paint/Clear Coat";
+
+            // Re-Render sorted by Zone
+            rosterData.sort((a,b) => a.zone.localeCompare(b.zone));
+            renderRoster();
+            updateStaffKPI();
+
+            showToast(`Assigned to Patrick Anderson`);
             await sendNotification("You have been assigned to: Paint Shop - Clear Coat", [PATRICK_ID]);
-        }
-        
-        showToast(`Assigned to ${employeeName}`);
-        
-        // Check if all done
-        if(document.getElementById('open-count').innerText == "0") {
-             document.getElementById('empty-pickups').style.display = 'block';
+        } else {
+            showToast(`Assigned to ${employeeName}`);
         }
     }, 400);
 }
@@ -418,22 +518,24 @@ function showToast(message, type = 'success') {
     setTimeout(() => { toast.className = ""; }, 3000);
 }
 
-// Updated Notification function to accept Target IDs
 async function sendNotification(msg, targetIds) {
-    // Fallback if no target provided
     if(!targetIds) targetIds = [DAVIS_ID];
+    console.log("SENDING TO:", targetIds);
+
+    const payload = { 
+        "accessorIds": targetIds, 
+        "channels": ["notificationCenter", "push"], 
+        "content": { "en_US": { "text": msg } } 
+    };
 
     try {
-        await fetch("https://app.staffbase.com/api/branch/notifications", {
+        const response = await fetch("https://app.staffbase.com/api/branch/notifications", {
             method: "POST",
             headers: { "Authorization":"Basic NjkzMWUzM2EyYWU0NGMxZWE4ZTI4NTY2OkMqTnQ2YSRJNWF5RzF0dkR1a0hFdW0hbGFEMTRsZk1+S185ITcxQ09jV1Jsb3ctJmpDczMrKmFveXdRSikyLXU=", "Content-Type":"application/json" },
-            body: JSON.stringify({ 
-                "accessorIds": targetIds, 
-                "channels": ["notificationCenter", "push"], 
-                "content": { "en_US": { "text": msg } } 
-            })
+            body: JSON.stringify(payload)
         });
-    } catch (e) { console.error(e); }
+        if(!response.ok) showToast("API Error: Check Console", "error");
+    } catch (e) { showToast("Network Error", "error"); }
 }
 </script>
 
