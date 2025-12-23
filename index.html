@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ford Manager Dashboard - Interactive</title>
+<title>Ford Manager Dashboard - Patrick Anderson Update</title>
 
 <style>
     /* --- FORD BRANDING & RESET --- */
@@ -52,7 +52,7 @@
     .header h1 { margin: 0; font-size: 20px; color: var(--ford-blue); text-transform: uppercase; letter-spacing: 0.5px; }
     .header-meta { font-size: 14px; color: #666; font-weight: 600; }
 
-    /* KPI CARDS - INTERACTIVE */
+    /* KPI CARDS */
     .kpi-row {
         grid-column: 1 / -1;
         display: grid;
@@ -69,13 +69,10 @@
         align-items: center;
         justify-content: space-between;
         cursor: pointer;
-        border: 2px solid transparent; /* Prepare for active state */
+        border: 2px solid transparent; 
         transition: all 0.2s;
     }
-
     .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-    
-    /* Active State Styles */
     .kpi-card.active { border-color: var(--ford-blue); background-color: #fcfdff; }
     
     .kpi-number { font-size: 24px; font-weight: 700; color: var(--ford-blue); }
@@ -104,7 +101,6 @@
         align-items: center;
     }
 
-    /* CARD STYLES (Shared for Swaps & Open Pickups) */
     .action-card {
         border: 1px solid var(--ford-border);
         border-left: 5px solid var(--warning);
@@ -114,68 +110,53 @@
         margin-bottom: 15px;
         transition: all 0.3s;
     }
-    .action-card.pickup-type { border-left-color: var(--danger); } /* Red for unfilled shifts */
+    .action-card.pickup-type { border-left-color: var(--danger); }
 
     .req-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: #666; font-weight: 600; }
     .req-title { font-size: 15px; font-weight: 700; color: var(--ford-blue); margin-bottom: 5px; }
     .req-details { font-size: 13px; color: #444; margin-bottom: 10px; line-height: 1.4; }
     
-    .swap-visual {
-        background: var(--ford-light-blue);
-        padding: 8px;
-        border-radius: 4px;
-        margin: 10px 0;
-        font-size: 13px;
-    }
-    .arrow-icon { color: var(--ford-blue); font-weight: bold; margin: 0 5px; }
-
-    .match-badge {
-        display: inline-block;
-        background: #e8f5e9;
-        color: var(--success);
-        font-size: 11px;
-        font-weight: 700;
-        padding: 3px 6px;
-        border-radius: 4px;
-        margin-bottom: 10px;
-    }
+    .swap-visual { background: var(--ford-light-blue); padding: 8px; border-radius: 4px; margin: 10px 0; font-size: 13px; }
+    .match-badge { display: inline-block; background: #e8f5e9; color: var(--success); font-size: 11px; font-weight: 700; padding: 3px 6px; border-radius: 4px; margin-bottom: 10px; }
 
     .btn-group { display: flex; gap: 10px; }
-    .btn {
-        flex: 1;
-        padding: 8px;
-        border: none;
-        border-radius: 4px;
-        font-weight: 600;
-        cursor: pointer;
-        font-size: 13px;
-    }
+    .btn { flex: 1; padding: 8px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 13px; }
     .btn-accept { background: var(--ford-blue); color: white; }
-    .btn-accept:hover { background: #002555; }
     .btn-decline { background: white; border: 1px solid var(--danger); color: var(--danger); }
-    .btn-decline:hover { background: #fff0f0; }
     .btn-assign { background: var(--ford-blue); color: white; }
+    .btn-assign:hover { background: #002555; }
 
     /* --- RIGHT PANEL: ROSTER TABLE --- */
-    .panel-roster {
-        background: white;
-        border-radius: 6px;
-        padding: 20px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-
+    .panel-roster { background: white; border-radius: 6px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     th { text-align: left; padding: 12px 8px; border-bottom: 2px solid #eee; color: #666; font-size: 12px; text-transform: uppercase; }
     td { padding: 12px 8px; border-bottom: 1px solid #f0f0f0; color: #333; }
     tr:last-child td { border-bottom: none; }
     tr:hover { background-color: #f9f9f9; }
-    
-    /* Helper to hide rows */
     tr.hidden-row { display: none; }
 
     .status-dot { height: 8px; width: 8px; background-color: #ccc; border-radius: 50%; display: inline-block; margin-right: 5px; }
     .dot-active { background-color: var(--success); }
     .dot-off { background-color: #ccc; }
+
+    /* --- MODAL STYLING --- */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; }
+    .modal-content { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    
+    .modal h3 { margin-top: 0; color: var(--ford-blue); border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .close-btn { float: right; font-size: 24px; cursor: pointer; color: #999; line-height: 20px; }
+    
+    /* Smart Match Section */
+    .smart-match-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+    .smart-label { color: var(--success); font-weight: 700; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; display: block; }
+    .smart-name { font-size: 16px; font-weight: 700; color: #111; display: flex; align-items: center; gap: 6px;}
+    .smart-reason { font-size: 13px; color: #555; margin-top: 4px; }
+    
+    .divider { text-align: center; margin: 15px 0; position: relative; }
+    .divider span { background: white; padding: 0 10px; color: #999; font-size: 12px; position: relative; z-index: 1; }
+    .divider::before { content: ""; position: absolute; top: 50%; left: 0; right: 0; border-top: 1px solid #eee; z-index: 0; }
+
+    select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; font-size: 14px; }
 
     /* RESPONSIVE */
     @media (max-width: 768px) {
@@ -183,8 +164,7 @@
         .kpi-row { grid-template-columns: 1fr; }
     }
 
-    /* TOAST */
-    #toast { visibility: hidden; min-width: 250px; background-color: var(--success); color: #fff; text-align: center; border-radius: 4px; padding: 15px; position: fixed; right: 30px; bottom: 30px; z-index: 9999; opacity: 0; transition: opacity 0.3s; }
+    #toast { visibility: hidden; min-width: 250px; background-color: var(--success); color: #fff; text-align: center; border-radius: 4px; padding: 15px; position: fixed; right: 30px; bottom: 30px; z-index: 99999; opacity: 0; transition: opacity 0.3s; }
     #toast.show { visibility: visible; opacity: 1; }
 </style>
 </head>
@@ -204,28 +184,16 @@
     </div>
 
     <div class="kpi-row">
-        
         <div class="kpi-card" id="kpi-staff" onclick="switchView('staff')">
-            <div>
-                <div class="kpi-number">24/25</div>
-                <div class="kpi-label">Staff On Floor</div>
-            </div>
+            <div><div class="kpi-number">24/25</div><div class="kpi-label">Staff On Floor</div></div>
             <div class="kpi-icon">👷</div>
         </div>
-
         <div class="kpi-card active" id="kpi-reqs" onclick="switchView('requests')">
-            <div>
-                <div class="kpi-number" id="pending-count">1</div>
-                <div class="kpi-label">Pending Requests</div>
-            </div>
+            <div><div class="kpi-number" id="pending-count">1</div><div class="kpi-label">Pending Requests</div></div>
             <div class="kpi-icon">⚠️</div>
         </div>
-
         <div class="kpi-card" id="kpi-open" onclick="switchView('pickups')">
-            <div>
-                <div class="kpi-number">2</div>
-                <div class="kpi-label">Open Shifts</div>
-            </div>
+            <div><div class="kpi-number" id="open-count">2</div><div class="kpi-label">Open Shifts</div></div>
             <div class="kpi-icon">📅</div>
         </div>
     </div>
@@ -235,70 +203,38 @@
 
         <div id="view-requests">
             <div class="action-card" id="req-1">
-                <div class="req-header">
-                    <span>Received: 2 hours ago</span>
-                    <span>#SW-992</span>
-                </div>
+                <div class="req-header"><span>2 hrs ago</span><span>#SW-992</span></div>
                 <div class="req-title">Shift Swap Request</div>
-                
-                <div class="swap-visual">
-                    <strong>K. Davis</strong> <span class="arrow-icon">&rarr;</span> <strong>R. Sanchez</strong>
-                </div>
-
-                <div class="req-details">
-                    Role: Chassis Marriage (Line 2)<br>
-                    Time: Nov 26 | 06:00 – 16:30
-                </div>
-
+                <div class="swap-visual"><strong>K. Davis</strong> &rarr; <strong>R. Sanchez</strong></div>
+                <div class="req-details">Role: Chassis Marriage (Line 2)<br>Time: Nov 26 | 06:00 – 16:30</div>
                 <div class="match-badge">✅ Skills Match Verified</div>
-
                 <div class="btn-group">
                     <button class="btn btn-decline" onclick="processRequest('req-1', false)">Decline</button>
                     <button class="btn btn-accept" onclick="processRequest('req-1', true)">Approve</button>
                 </div>
             </div>
-            <div style="text-align:center; color:#999; font-size:13px; margin-top:20px; display:none;" id="empty-reqs">
-                No pending requests.
-            </div>
+            <div style="text-align:center; color:#999; font-size:13px; margin-top:20px; display:none;" id="empty-reqs">No pending requests.</div>
         </div>
 
         <div id="view-pickups" style="display:none;">
             <div class="action-card pickup-type" id="pickup-1">
-                <div class="req-header">
-                    <span>Urgency: High</span>
-                    <span>#OP-101</span>
-                </div>
+                <div class="req-header"><span>High Urgency</span><span>#OP-101</span></div>
                 <div class="req-title">Unfilled Shift</div>
-                <div class="req-details">
-                    Role: Paint Shop - Clear Coat<br>
-                    Time: Nov 26 | 16:30 – 02:30
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-assign" onclick="assignShift('pickup-1')">Assign Staff</button>
-                </div>
+                <div class="req-details">Role: Paint Shop - Clear Coat<br>Time: Nov 26 | 16:30 – 02:30</div>
+                <div class="btn-group"><button class="btn btn-assign" onclick="openAssignModal('pickup-1', 'Paint Shop')">Assign Staff</button></div>
             </div>
             <div class="action-card pickup-type" id="pickup-2">
-                <div class="req-header">
-                    <span>Urgency: Medium</span>
-                    <span>#OP-102</span>
-                </div>
+                <div class="req-header"><span>Medium Urgency</span><span>#OP-102</span></div>
                 <div class="req-title">Unfilled Shift</div>
-                <div class="req-details">
-                    Role: Material Handling<br>
-                    Time: Nov 29 | 06:00 – 14:00
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-assign" onclick="assignShift('pickup-2')">Assign Staff</button>
-                </div>
+                <div class="req-details">Role: Material Handling<br>Time: Nov 29 | 06:00 – 14:00</div>
+                <div class="btn-group"><button class="btn btn-assign" onclick="openAssignModal('pickup-2', 'Material Handling')">Assign Staff</button></div>
             </div>
+             <div style="text-align:center; color:#999; font-size:13px; margin-top:20px; display:none;" id="empty-pickups">All shifts covered!</div>
         </div>
 
         <div id="view-staff-msg" style="display:none; text-align:center; color:#666; margin-top:40px;">
-            <div style="font-size:40px; margin-bottom:10px;">👷</div>
-            Filtering Roster for Active Staff...<br>
-            <small>See Right Panel</small>
+            <div style="font-size:40px; margin-bottom:10px;">👷</div>Filtering Active Staff...
         </div>
-
     </div>
 
     <div class="panel-roster">
@@ -307,76 +243,67 @@
             <span style="font-size:12px; color:#003478; cursor:pointer;" onclick="resetRoster()">Reset Filter</span>
         </div>
         <table id="roster-table">
-            <thead>
-                <tr>
-                    <th>Status</th>
-                    <th>Employee</th>
-                    <th>Zone</th>
-                    <th>Role</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Status</th><th>Employee</th><th>Zone</th><th>Role</th></tr></thead>
             <tbody>
-                <tr class="roster-row status-active">
-                    <td><span class="status-dot dot-active"></span>Active</td>
-                    <td>J. Miller</td>
-                    <td>Zone C</td>
-                    <td>Trim Assembly</td>
-                </tr>
-                <tr class="roster-row status-active" id="row-davis">
-                    <td><span class="status-dot dot-active"></span>Active</td>
-                    <td><strong>K. Davis</strong></td>
-                    <td>Zone B</td>
-                    <td>Chassis Marriage</td>
-                </tr>
-                <tr class="roster-row status-active">
-                    <td><span class="status-dot dot-active"></span>Active</td>
-                    <td>T. Wilson</td>
-                    <td>Zone C</td>
-                    <td>Trim Assembly</td>
-                </tr>
-                <tr class="roster-row status-off" id="row-sanchez">
-                    <td><span class="status-dot dot-off"></span>Off</td>
-                    <td><strong>R. Sanchez</strong></td>
-                    <td>-</td>
-                    <td>Floater (Off)</td>
-                </tr>
-                <tr class="roster-row status-active">
-                    <td><span class="status-dot dot-active"></span>Active</td>
-                    <td>M. Johnson</td>
-                    <td>Zone A</td>
-                    <td>Paint Shop</td>
-                </tr>
-                <tr class="roster-row status-off">
-                    <td><span class="status-dot dot-off"></span>Off</td>
-                    <td>B. Smith</td>
-                    <td>-</td>
-                    <td>Leave</td>
-                </tr>
+                <tr class="roster-row status-active"><td><span class="status-dot dot-active"></span>Active</td><td>J. Miller</td><td>Zone C</td><td>Trim Assembly</td></tr>
+                <tr class="roster-row status-active" id="row-davis"><td><span class="status-dot dot-active"></span>Active</td><td><strong>K. Davis</strong></td><td>Zone B</td><td>Chassis Marriage</td></tr>
+                <tr class="roster-row status-active"><td><span class="status-dot dot-active"></span>Active</td><td>T. Wilson</td><td>Zone C</td><td>Trim Assembly</td></tr>
+                <tr class="roster-row status-off" id="row-sanchez"><td><span class="status-dot dot-off"></span>Off</td><td><strong>R. Sanchez</strong></td><td>-</td><td>Floater (Off)</td></tr>
+                <tr class="roster-row status-off" id="row-panderson"><td><span class="status-dot dot-off"></span>Off</td><td>Patrick Anderson</td><td>-</td><td>Leave</td></tr>
             </tbody>
         </table>
     </div>
 
 </div>
 
+<div id="assignModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeAssignModal()">&times;</span>
+        <h3>Assign Staff</h3>
+        
+        <p style="font-size:13px; color:#666; margin-bottom:15px;">Target Role: <strong id="modal-role-text">Paint Shop</strong></p>
+
+        <div class="smart-match-box">
+            <span class="smart-label">⭐ Smart Match</span>
+            <div class="smart-name">
+                Patrick Anderson
+                <span style="background:#003478; color:white; font-size:10px; padding:2px 4px; border-radius:3px; font-weight:normal; margin-left:6px;">98% Match</span>
+            </div>
+            <div class="smart-reason">Qualified • No Overtime • Available</div>
+            <button class="btn btn-assign" style="margin-top:10px; width:100%;" onclick="confirmAssignment('Patrick Anderson')">Accept Smart Match</button>
+        </div>
+
+        <div class="divider"><span>OR SELECT MANUALLY</span></div>
+
+        <select id="manual-assign-select">
+            <option value="" disabled selected>Select Employee...</option>
+            <option value="R. Sanchez">R. Sanchez (Floater)</option>
+            <option value="T. Wilson">T. Wilson (Trim A)</option>
+        </select>
+
+        <button class="btn" style="border:1px solid #ccc; width:100%;" onclick="confirmAssignment(document.getElementById('manual-assign-select').value)">Assign Selected</button>
+
+    </div>
+</div>
+
 <div id="toast">Action Saved</div>
 
 <script>
-// --- VIEW SWITCHING LOGIC ---
+// --- GLOBAL VARS ---
+const DAVIS_ID = "692f4f895645392f2317a142"; 
+const PATRICK_ID = "691266696842ab0152b7fbb7"; // Added Patrick's ID
+
+let activePickupId = null;
+
+// --- VIEW SWITCHING ---
 function switchView(viewName) {
-    // 1. Reset KPI Styles
     document.querySelectorAll('.kpi-card').forEach(el => el.classList.remove('active'));
-    
-    // 2. Hide all Left Panel Views
     document.getElementById('view-requests').style.display = 'none';
     document.getElementById('view-pickups').style.display = 'none';
     document.getElementById('view-staff-msg').style.display = 'none';
+    
+    resetRoster(); // Reset table filter by default
 
-    // 3. Reset Roster Filter (Default)
-    const rows = document.querySelectorAll('.roster-row');
-    rows.forEach(row => row.classList.remove('hidden-row'));
-    document.getElementById('roster-title').innerText = "Team Roster (All)";
-
-    // 4. Activate Logic based on Selection
     if(viewName === 'requests') {
         document.getElementById('kpi-reqs').classList.add('active');
         document.getElementById('left-panel-title').innerText = "Pending Requests";
@@ -391,8 +318,6 @@ function switchView(viewName) {
         document.getElementById('kpi-staff').classList.add('active');
         document.getElementById('left-panel-title').innerText = "Staff Overview";
         document.getElementById('view-staff-msg').style.display = 'block';
-        
-        // FILTER LOGIC: Hide "Off" status rows
         filterRosterByActive();
     }
 }
@@ -401,68 +326,90 @@ function filterRosterByActive() {
     const rows = document.querySelectorAll('.roster-row');
     let count = 0;
     rows.forEach(row => {
-        if(row.classList.contains('status-off')) {
-            row.classList.add('hidden-row');
-        } else {
-            count++;
-        }
+        if(row.classList.contains('status-off')) row.classList.add('hidden-row');
+        else count++;
     });
     document.getElementById('roster-title').innerText = `Active Staff (${count})`;
 }
 
 function resetRoster() {
-    const rows = document.querySelectorAll('.roster-row');
-    rows.forEach(row => row.classList.remove('hidden-row'));
+    document.querySelectorAll('.roster-row').forEach(row => row.classList.remove('hidden-row'));
     document.getElementById('roster-title').innerText = "Team Roster (All)";
 }
 
-
-// --- ACTION LOGIC ---
-const EMPLOYEE_ACCESSOR_ID = "692f4f895645392f2317a142"; 
-
+// --- SWAP LOGIC ---
 async function processRequest(cardId, isApproved) {
     const card = document.getElementById(cardId);
     card.style.opacity = '0.5';
-    
     setTimeout(async () => {
         card.style.display = 'none';
         document.getElementById('empty-reqs').style.display = 'block';
         document.getElementById('pending-count').innerText = "0";
 
         if (isApproved) {
-            updateRosterTable();
+            // Update Roster: Davis out, Sanchez in
+            document.getElementById("row-davis").innerHTML = `<td><span class="status-dot dot-off"></span>Swapped</td><td style="text-decoration:line-through; color:#999;">K. Davis</td><td>-</td><td>-</td>`;
+            document.getElementById("row-davis").className = "roster-row status-off";
+            
+            document.getElementById("row-sanchez").innerHTML = `<td><span class="status-dot dot-active"></span>Active</td><td><strong>R. Sanchez</strong></td><td>Zone B</td><td>Chassis Marriage</td>`;
+            document.getElementById("row-sanchez").className = "roster-row status-active";
+
             showToast("Swap Approved");
-            await sendNotification("Your swap request was Approved.", "Swap Approved");
+            await sendNotification("Your swap request was Approved.", [DAVIS_ID]);
         } else {
             showToast("Request Declined", "error");
-            await sendNotification("Your swap request was declined.", "Request Declined");
+            await sendNotification("Your swap request was declined.", [DAVIS_ID]);
         }
     }, 400);
 }
 
-function assignShift(cardId) {
-    const card = document.getElementById(cardId);
+// --- SMART ASSIGN LOGIC ---
+function openAssignModal(pickupId, roleName) {
+    activePickupId = pickupId;
+    document.getElementById('modal-role-text').innerText = roleName;
+    document.getElementById('assignModal').style.display = 'flex';
+}
+
+function closeAssignModal() {
+    document.getElementById('assignModal').style.display = 'none';
+}
+
+async function confirmAssignment(employeeName) {
+    if(!employeeName) return; 
+    
+    closeAssignModal();
+    
+    // Hide the pickup card
+    const card = document.getElementById(activePickupId);
     card.style.opacity = '0.5';
-    setTimeout(() => {
+    
+    setTimeout(async () => {
         card.style.display = 'none';
-        showToast("Shift Assigned Successfully");
+        
+        // Update KPI
+        let count = parseInt(document.getElementById('open-count').innerText);
+        document.getElementById('open-count').innerText = Math.max(0, count - 1);
+        
+        // If Patrick Anderson was assigned (Smart Match), update roster
+        if(employeeName === "Patrick Anderson") {
+            const row = document.getElementById("row-panderson");
+            row.innerHTML = `<td><span class="status-dot dot-active"></span>Active</td><td><strong>Patrick Anderson</strong></td><td>Zone A</td><td>Paint Shop</td>`;
+            row.className = "roster-row status-active";
+
+            // Send Notification specifically to Patrick
+            await sendNotification("You have been assigned to: Paint Shop - Clear Coat", [PATRICK_ID]);
+        }
+        
+        showToast(`Assigned to ${employeeName}`);
+        
+        // Check if all done
+        if(document.getElementById('open-count').innerText == "0") {
+             document.getElementById('empty-pickups').style.display = 'block';
+        }
     }, 400);
 }
 
-function updateRosterTable() {
-    // Visual update for K. Davis -> Swapped
-    const rowDavis = document.getElementById("row-davis");
-    rowDavis.classList.add('status-off');
-    rowDavis.classList.remove('status-active');
-    rowDavis.innerHTML = `<td><span class="status-dot dot-off"></span>Swapped</td><td style="text-decoration:line-through; color:#999;">K. Davis</td><td>-</td><td>-</td>`;
-
-    // Visual update for R. Sanchez -> Active
-    const rowSanchez = document.getElementById("row-sanchez");
-    rowSanchez.classList.add('status-active');
-    rowSanchez.classList.remove('status-off');
-    rowSanchez.innerHTML = `<td><span class="status-dot dot-active"></span>Active</td><td><strong>R. Sanchez</strong></td><td>Zone B</td><td>Chassis Marriage</td>`;
-}
-
+// --- UTILS ---
 function showToast(message, type = 'success') {
     const toast = document.getElementById("toast");
     toast.innerText = message;
@@ -471,18 +418,19 @@ function showToast(message, type = 'success') {
     setTimeout(() => { toast.className = ""; }, 3000);
 }
 
-async function sendNotification(msg) {
+// Updated Notification function to accept Target IDs
+async function sendNotification(msg, targetIds) {
+    // Fallback if no target provided
+    if(!targetIds) targetIds = [DAVIS_ID];
+
     try {
         await fetch("https://app.staffbase.com/api/branch/notifications", {
             method: "POST",
-            headers: {
-                "Authorization":"Basic NjkzMWUzM2EyYWU0NGMxZWE4ZTI4NTY2OkMqTnQ2YSRJNWF5RzF0dkR1a0hFdW0hbGFEMTRsZk1+S185ITcxQ09jV1Jsb3ctJmpDczMrKmFveXdRSikyLXU=",
-                "Content-Type":"application/json"
-            },
-            body: JSON.stringify({
-                "accessorIds": [EMPLOYEE_ACCESSOR_ID], 
-                "channels": ["notificationCenter", "push"],
-                "content": { "en_US": { "text": msg } }
+            headers: { "Authorization":"Basic NjkzMWUzM2EyYWU0NGMxZWE4ZTI4NTY2OkMqTnQ2YSRJNWF5RzF0dkR1a0hFdW0hbGFEMTRsZk1+S185ITcxQ09jV1Jsb3ctJmpDczMrKmFveXdRSikyLXU=", "Content-Type":"application/json" },
+            body: JSON.stringify({ 
+                "accessorIds": targetIds, 
+                "channels": ["notificationCenter", "push"], 
+                "content": { "en_US": { "text": msg } } 
             })
         });
     } catch (e) { console.error(e); }
